@@ -1,44 +1,66 @@
-from django.http import HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404
-from django.urls import reverse
+from django.contrib import messages
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.decorators.http import require_POST
 from django.utils import timezone
-from django.views import generic
-
 from .models import Question
+from .forms import QuestionForm
+
+def index(request):
+    q = request.GET.get("q", "").strip()
+
+    qs = Question.objects.order_by("-pub_date")
+    if q:
+        qs = qs.filter(question_text__icontains=q) | qs.filter(car_model__icontains=q)
+
+    context = {
+        "latest_question_list": qs,
+        "q": q,
+    }
+    return render(request, "polls/index.html", context)
 
 
-class IndexView(generic.ListView):
-    template_name = "polls/index.html"
-    context_object_name = "latest_question_list"
 
-    def get_queryset(self):
-        return Question.objects.filter(
-            pub_date__lte=timezone.now()
-        ).order_by("-pub_date")[:5]
-
-
-
-class DetailView(generic.DetailView):
-    model = Question
-    template_name = "polls/detail.html"
-
-
-class ResultsView(generic.DetailView):
-    model = Question
-    template_name = "polls/results.html"
-
-
-def vote(request, question_id):
+def detail(request, question_id):
     question = get_object_or_404(Question, pk=question_id)
-    try:
-        selected_choice = question.choice_set.get(pk=request.POST["choice"])
-    except (KeyError, Choice.DoesNotExist):
-        return render(
-            request,
-            "polls/detail.html",
-            {"question": question, "error_message": "選択肢を選んでください。"},
-        )
+    return render(request, "polls/detail.html", {"question": question})
+
+
+def add(request):
+    if request.method == "POST":
+        form = QuestionForm(request.POST)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.pub_date = timezone.now()
+            obj.save()
+            messages.success(request, "点検を登録しました。")
+            return redirect("polls:index")
+        else:
+            messages.error(request, "入力内容を確認してください。")
     else:
-        selected_choice.votes += 1
-        selected_choice.save()
-        return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
+        form = QuestionForm()
+    return render(request, "polls/add.html", {"form": form})
+
+
+def edit(request, question_id):
+    question = get_object_or_404(Question, pk=question_id)
+
+    if request.method == "POST":
+        form = QuestionForm(request.POST, instance=question)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "点検を更新しました。")
+            return redirect("polls:detail", question_id=question.id)
+        else:
+            messages.error(reqest, "入力内容を確認してください。")
+    else:
+        form = QuestionForm(instance=question)
+
+    return render(request, "polls/edit.html", {"form": form, "question": question})
+
+
+@require_POST
+def delete(request, question_id):
+    question = get_object_or_404(Question, pk=question_id)
+    question.delete()
+    messages.success(request, "点検を削除しました。")
+    return redirect("polls:index")

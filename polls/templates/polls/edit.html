@@ -1,0 +1,47 @@
+{% extends "polls/base.html" %}
+{% block title %}編集 | 点検登録アプリ{% endblock %}
+
+{% block content %}
+<h2>点検を編集</h2>
+
+{% if form.non_field_errors %}
+  <div class="form-error">
+    {{ form.non_field_errors }}
+  </div>
+{% endif %}
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  <div class="form-row">
+    {{ form.question_text.label_tag }}
+    {{ form.question_text }}
+    {% for error in form.question_text.errors %}
+      <div class="field-error">{{ error }}</div>
+    {% endfor %}
+  </div>
+
+  <div class="form-row">
+    {{ form.car_model.label_tag }}
+    {{ form.car_model }}
+    {% for error in form.car_model.errors %}
+      <div class="field-error">{{ error }}</div>
+    {% endfor %}
+  </div>
+
+  <div class="form-row">
+    {{ form.mileage.label_tag }}
+    {{ form.mileage }}
+    {% for error in form.mileage.errors %}
+      <div class="field-error">{{ error }}</div>
+    {% endfor %}
+  </div>
+
+  <button type="submit" class="btn">保存</button>
+</form>
+
+<p>
+  <a href="{% url 'polls:detail' question.id %}">詳細に戻る</a> |
+  <a href="{% url 'polls:index' %}">一覧に戻る</a>
+</p>
+{% endblock %}

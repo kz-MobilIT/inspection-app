@@ -1,15 +1,42 @@
-<h1>{{ question.question_text }}</h1>
+{% extends "polls/base.html" %}
+{% block title %}一覧 | 点検登録アプリ{% endblock %}
 
-{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+{% block content %}
 
-<form action="{% url 'polls:vote' question.id %}" method="post">
-  {% csrf_token %}
-  {% for choice in question.choice_set.all %}
-    <input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}">
-    <label for="choice{{ forloop.counter }}">{{ choice.choice_text }}</label><br>
-  {% endfor %}
-  <br>
-  <input type="submit" value="投票">
-</form>
+<h1>点検詳細</h1>
 
-    
+<table border="1" cellpadding="6" cellspacing="0">
+  <tr>
+    <th>点検内容</th>
+    <td>{{ question.question_text }}</td>
+  </tr>
+  <tr>
+    <th>車種</th>
+    <td>{{ question.car_model|default:"-" }}</td>
+  </tr>
+  <tr>
+    <th>走行距離(km)</th>
+    <td>{{ question.mileage }}</td>
+  </tr>
+  <tr>
+    <th>登録日時</th>
+    <td>{{ question.pub_date|date:"Y/m/d H:i" }}</td>
+  </tr>
+</table>
+
+<p>
+  <a href="{% url 'polls:index' %}">一覧に戻る</a>
+</p>
+
+  <form action="{% url 'polls:delete' question.id %}" method="post" style="margin-top: 12px;">
+    {% csrf_token %}
+    <button type="submit" onclick="return confirm('本当に削除しますか？');">
+      削除
+    </button>
+  </form>
+  
+<p>
+  <a href="{% url 'polls:edit' question.id %}">編集</a>
+</p>
+
+{% endblock %}
